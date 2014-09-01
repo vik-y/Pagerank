@@ -57,11 +57,11 @@ while(count<1000):
         signal= 0
         try:
             #Getting the url out of the search results
-            print val.next.attrs[0][1].split('//')[1]+' Rank '+str(rank_count)
+            #print val.next.attrs[0][1].split('//')[1]+' Rank '+str(rank_count)
             zense = str(val.next.attrs[0][1].split('//')[1].split('/')[0])
-            print zense
+            #print zense
             if(zense==web_address or zense==web_address[4:]):
-                print 'Rank of Zense is '+str(rank_count)
+                print 'Rank of "'+web_address+'" for search string "'+search_string+'" is '+str(rank_count)
                 signal=1
             rank_count+=1
            
@@ -79,6 +79,10 @@ The code is not optimized, if you are willing to contribute or want to do the sa
 welcome, kindly do the same and send me a pull request. :) 
 '''
 
+'''
+Future aspects - Make this multithreaded to do return any sort of result within 2 seconds
+NOTE: Don't use mechanize for that, use urllib2, because making different threads of mechanize will cost you a fortune :D
+'''
     
     
 
