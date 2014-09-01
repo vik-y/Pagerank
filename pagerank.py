@@ -1,7 +1,7 @@
 '''
 Page Rank 
 Author - Vikas Yadav
-Helpes you to find your exact rank on Google based on your search string.
+Helps you to find your exact rank on Google based on your search string.
 NOTE: Region Specific, results based on google.co.in region
 '''
 from BeautifulSoup import BeautifulSoup
