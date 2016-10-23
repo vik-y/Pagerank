@@ -6,88 +6,49 @@ NOTE: Region Specific, results based on google.co.in region
 '''
 from BeautifulSoup import BeautifulSoup
 
-import cookielib
-import mechanize
-
-#Brower Initialization Starts here
-
-br = mechanize.Browser()
-cj = cookielib.LWPCookieJar()
-br.set_cookiejar(cj)
-br.set_handle_equiv(True)
-br.set_handle_gzip(True)
-br.set_handle_redirect(True)
-br.set_handle_referer(True)
-br.set_handle_robots(False) 
-br.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=1)
+import requests, re, threading, time, logging
 
 #Browser Initialization ends here
 
-br.addheaders = [('User-agent', 'Firefox'), ('Accept','text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')]
-#added headers to the request
+logging.basicConfig(filename="example.log", format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
-'''
-Note: All this could have been done by just using urllib2 and running that script will also reduce your memory requirements. 
-I generally use mechanize library because it makes things easier in the long run.
--> Mechanize Library supports storage of cookies which you can send along with your headers
-    Now when I talk about cookies - Yes we can maintain sessions :D that makes scraping easier than ever.
-'''
 
 rank_count = 1
 
 search_string = raw_input("Enter the search string:\n") #The string which you want to search for
-web_address = raw_input("Enter your web address (eg www.zense.co.in):\n") #Your website address
+web_address = raw_input("Enter the url which you are looking for:\n") #Your website address
 
-count = 0
-while(count<1000):
-    #I just look through the first 1000 results
-    if(count==0):
-        r = br.open("http://www.google.com/search?q="+search_string);
+def search(query, website, count):
+    headers = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36',
+               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
+
+    if (count == 0):
+        r = requests.get("http://encrypted.google.com/search?q=" + query, headers=headers);
     else:
-        r = br.open("http://www.google.com/search?q="+search_string+"&start="+str(count));
+        r = requests.get("http://encrypted.google.com/search?q=" + query + "&start=" + str(count), headers=headers);
 
-    html = r.read()
-    
-    html=BeautifulSoup(html);
-    
-    results = html.findAll('h3', {'class':'r'})
-    #The class which contains the search result, 
-    
-    for val in results:
-        signal= 0
-        try:
-            #Getting the url out of the search results
-            #print val.next.attrs[0][1].split('//')[1]+' Rank '+str(rank_count)
-            zense = str(val.next.attrs[0][1].split('//')[1].split('/')[0])
-            #print zense
-            if(zense==web_address or zense==web_address[4:]):
-                print 'Rank of "'+web_address+'" for search string "'+search_string+'" is '+str(rank_count)
-                signal=1
-            rank_count+=1
-           
-        except:
-            error = 'error'
-        
-        if(signal==1):
-            break
-    if(signal==1):
-        break
-    count+=10
-    
-'''
-The code is not optimized, if you are willing to contribute or want to do the same thing with urllib2 then you are 
-welcome, kindly do the same and send me a pull request. :) 
-'''
+    html = r.text
+    #print html
 
-'''
-Future aspects - Make this multithreaded to do return any sort of result within 2 seconds
-NOTE: Don't use mechanize for that, use urllib2, because making different threads of mechanize will cost you a fortune :D
-'''
-    
-    
+    pattern = '<div class="g">(.*?)</div>'
+    results = re.finditer(pattern, html)
 
-        
-    
+    rank = count+1
+    for result in results:
+        temp = result.groups()[0]
+        url = re.search("https?://(.*?)/", temp)
 
-    
+        if url:
+            logging.debug(url.group(1))
+            if url.group(1)==website:
+                print "Website Found. Rank", rank
+                break
+        rank += 1
+
+# TODO: Multithread it properly to prevent google captcha.
+for i in range(0, 5):
+    # Currently searching only 5 pages.
+    t = threading.Thread(target=search, args=(search_string, web_address, i*10,))
+    t.start()
+    time.sleep(1)
     
